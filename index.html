@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Selenium Test Console — Automation Framework Field Guide</title>
+<meta name="description" content="A field guide to building a Selenium automation testing framework from scratch, with BDD, mobile and cross browser coverage.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e141c;
+    --bg-raised:#141d28;
+    --bg-panel:#111925;
+    --border:#23303f;
+    --border-soft:#1b2531;
+    --text:#e7ecf2;
+    --text-dim:#93a1b3;
+    --text-faint:#5c6b7f;
+    --pass:#3ecf8e;
+    --pass-dim:#2a5e46;
+    --link:#8ea2ff;
+    --link-dim:#3a4270;
+    --warn:#f2b84b;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1100px 500px at 12% -10%, rgba(62,207,142,0.07), transparent 60%),
+      radial-gradient(900px 500px at 88% 0%, rgba(142,162,255,0.08), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Sans', -apple-system, sans-serif;
+    line-height:1.65;
+  }
+  h1,h2,h3{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  code, .mono{font-family:'IBM Plex Mono', monospace;}
+  a{color:var(--link);}
+  img,svg{display:block;}
+  .wrap{max-width:1160px; margin:0 auto; padding:0 28px;}
+
+  /* header */
+  header{
+    position:sticky; top:0; z-index:50;
+    background:rgba(14,20,28,0.82);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border-soft);
+  }
+  .nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 0;
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:15px; font-weight:500; color:var(--text);
+    text-decoration:none;
+  }
+  .brand .dot-cluster{display:flex; gap:5px;}
+  .brand .dot{width:8px; height:8px; border-radius:50%;}
+  .brand .dot:nth-child(1){background:#ff6363;}
+  .brand .dot:nth-child(2){background:#f2b84b;}
+  .brand .dot:nth-child(3){background:var(--pass);}
+  .nav-links{display:flex; gap:28px; align-items:center;}
+  .nav-links a{
+    color:var(--text-dim); text-decoration:none; font-size:14px; font-weight:500;
+  }
+  .nav-links a:hover{color:var(--text);}
+  .nav-cta{
+    background:var(--pass); color:#08150e; padding:9px 16px; border-radius:7px;
+    font-size:13.5px; font-weight:600; text-decoration:none;
+  }
+  .nav-toggle{display:none;}
+
+  /* hero */
+  .hero{
+    padding:76px 0 64px;
+    display:grid;
+    grid-template-columns:1.05fr 1fr;
+    gap:56px;
+    align-items:center;
+  }
+  .kicker{
+    color:var(--pass); font-family:'IBM Plex Mono', monospace; font-size:13.5px;
+    margin-bottom:18px; display:flex; align-items:center; gap:8px;
+  }
+  .kicker::before{content:"›"; color:var(--text-faint);}
+  .hero h1{
+    font-size:44px; line-height:1.12; color:#fff;
+  }
+  .hero h1 .accent{color:var(--pass);}
+  .hero p.lede{
+    color:var(--text-dim); font-size:17px; margin-top:20px; max-width:52ch;
+  }
+  .hero-ctas{display:flex; gap:14px; margin-top:30px; flex-wrap:wrap;}
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:12px 20px; border-radius:8px; font-weight:600; font-size:14.5px;
+    text-decoration:none; border:1px solid transparent;
+  }
+  .btn-primary{background:var(--pass); color:#07150d;}
+  .btn-ghost{border-color:var(--border); color:var(--text);}
+  .btn-ghost:hover{border-color:var(--text-faint);}
+
+  /* terminal */
+  .term{
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 30px 70px -30px rgba(0,0,0,0.7);
+  }
+  .term-bar{
+    display:flex; align-items:center; gap:8px;
+    padding:12px 16px;
+    background:var(--bg-raised);
+    border-bottom:1px solid var(--border);
+  }
+  .term-bar .dot{width:10px; height:10px; border-radius:50%;}
+  .term-bar .dot:nth-child(1){background:#ff6363;}
+  .term-bar .dot:nth-child(2){background:#f2b84b;}
+  .term-bar .dot:nth-child(3){background:var(--pass);}
+  .term-title{
+    margin-left:8px; font-family:'IBM Plex Mono', monospace; font-size:12.5px; color:var(--text-faint);
+  }
+  .term-body{
+    padding:22px 20px 26px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13.5px;
+    color:var(--text-dim);
+  }
+  .term-line{
+    display:flex; align-items:flex-start; gap:10px; margin-bottom:9px;
+    opacity:0; transform:translateY(4px);
+    animation:lineIn .45s ease forwards;
+  }
+  .term-line .icon{
+    width:15px; flex-shrink:0; margin-top:1px; text-align:center;
+  }
+  .term-line.pass .icon{color:var(--pass);}
+  .term-line.info .icon{color:var(--text-faint);}
+  .term-line.warn .icon{color:var(--warn);}
+  .term-line .txt b{color:var(--text); font-weight:500;}
+  .term-summary{
+    margin-top:14px; padding-top:14px; border-top:1px dashed var(--border);
+    color:var(--pass);
+  }
+  .cursor{display:inline-block; width:7px; height:13px; background:var(--pass); margin-left:4px; animation:blink 1s step-end infinite;}
+  @keyframes lineIn{to{opacity:1; transform:translateY(0);}}
+  @keyframes blink{50%{opacity:0;}}
+
+  /* section shell */
+  section{padding:64px 0;}
+  .section-head{max-width:640px; margin-bottom:38px;}
+  .section-head h2{font-size:28px; color:#fff;}
+  .section-head p{color:var(--text-dim); margin-top:10px; font-size:15.5px;}
+
+  /* stat strip */
+  .stat-strip{
+    display:grid; grid-template-columns:repeat(4,1fr);
+    border:1px solid var(--border); border-radius:12px; overflow:hidden;
+  }
+  .stat{
+    padding:26px 22px; border-right:1px solid var(--border);
+    background:var(--bg-panel);
+  }
+  .stat:last-child{border-right:none;}
+  .stat b{
+    display:block; font-family:'Space Grotesk', sans-serif; font-size:27px; color:var(--pass);
+  }
+  .stat span{color:var(--text-dim); font-size:13.5px; display:block; margin-top:6px;}
+
+  /* suite list */
+  .suite-list{border:1px solid var(--border); border-radius:12px; overflow:hidden;}
+  .suite-item{
+    display:grid; grid-template-columns:26px 1fr auto;
+    gap:16px; align-items:start;
+    padding:22px 24px;
+    border-bottom:1px solid var(--border-soft);
+    background:var(--bg-panel);
+  }
+  .suite-item:last-child{border-bottom:none;}
+  .suite-check{
+    width:22px; height:22px; border-radius:6px; background:var(--pass-dim);
+    color:var(--pass); display:flex; align-items:center; justify-content:center;
+    font-size:13px; margin-top:2px;
+  }
+  .suite-item h3{font-size:16.5px; color:#fff; margin-bottom:5px;}
+  .suite-item p{color:var(--text-dim); font-size:14.5px; margin:0;}
+  .suite-tag{
+    font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--text-faint);
+    border:1px solid var(--border); padding:4px 9px; border-radius:20px; white-space:nowrap;
+  }
+
+  /* course cards */
+  .card-grid{
+    display:grid; grid-template-columns:repeat(2,1fr); gap:18px;
+  }
+  .course-card{
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:26px 24px;
+    text-decoration:none;
+    display:flex; flex-direction:column; gap:12px;
+    transition:border-color .2s ease, transform .2s ease;
+  }
+  .course-card:hover{border-color:var(--pass-dim); transform:translateY(-3px);}
+  .course-card .tag{
+    font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--pass);
+    text-transform:uppercase; letter-spacing:0.04em;
+  }
+  .course-card h3{font-size:18px; color:#fff;}
+  .course-card p{color:var(--text-dim); font-size:14px; margin:0;}
+  .course-card .go{
+    margin-top:auto; color:var(--link); font-size:13.5px; font-weight:500;
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .bootcamp-card{grid-column:1 / -1; display:grid; grid-template-columns:1fr auto; align-items:center; gap:20px;}
+  .bootcamp-card p{max-width:60ch;}
+
+  /* reading log */
+  .log-list{
+    background:var(--bg-panel); border:1px solid var(--border); border-radius:12px;
+    padding:8px 0;
+  }
+  .log-item{
+    display:flex; align-items:center; gap:12px;
+    padding:15px 22px;
+    border-bottom:1px solid var(--border-soft);
+    font-family:'IBM Plex Mono', monospace; font-size:13.5px;
+  }
+  .log-item:last-child{border-bottom:none;}
+  .log-item .prompt{color:var(--text-faint);}
+  .log-item a{color:var(--text); text-decoration:none;}
+  .log-item a:hover{color:var(--link); text-decoration:underline;}
+  .log-item .path{color:var(--text-faint); margin-left:auto; font-size:12px;}
+
+  /* callout */
+  .callout{
+    border:1px solid var(--pass-dim);
+    background:linear-gradient(180deg, rgba(62,207,142,0.08), rgba(62,207,142,0.02));
+    border-radius:14px;
+    padding:38px 36px;
+    display:flex; align-items:center; justify-content:space-between; gap:30px; flex-wrap:wrap;
+  }
+  .callout h2{font-size:24px; color:#fff; max-width:32ch;}
+  .callout p{color:var(--text-dim); margin-top:8px; max-width:44ch;}
+
+  /* footer */
+  footer{border-top:1px solid var(--border-soft); padding:40px 0 30px;}
+  .foot-top{
+    display:grid; grid-template-columns:1.3fr 1fr 1fr 1fr; gap:32px;
+    padding-bottom:32px; border-bottom:1px solid var(--border-soft);
+  }
+  .foot-brand p{color:var(--text-dim); font-size:13.5px; max-width:32ch; margin-top:10px;}
+  .foot-col h4{
+    font-size:12.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.05em;
+    font-family:'IBM Plex Mono', monospace; margin-bottom:14px; font-weight:500;
+  }
+  .foot-col a{
+    display:block; color:var(--text-dim); font-size:13.5px; text-decoration:none; margin-bottom:10px;
+  }
+  .foot-col a:hover{color:var(--text);}
+  .foot-bottom{
+    display:flex; justify-content:space-between; align-items:center; padding-top:22px;
+    font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--text-faint); flex-wrap:wrap; gap:10px;
+  }
+
+  @media (max-width:860px){
+    .hero{grid-template-columns:1fr; padding-top:40px;}
+    .hero h1{font-size:34px;}
+    .nav-links{display:none;}
+    .stat-strip{grid-template-columns:repeat(2,1fr);}
+    .stat{border-bottom:1px solid var(--border);}
+    .card-grid{grid-template-columns:1fr;}
+    .bootcamp-card{grid-template-columns:1fr;}
+    .foot-top{grid-template-columns:1fr 1fr; row-gap:26px;}
+    .suite-item{grid-template-columns:22px 1fr; }
+    .suite-tag{grid-column:2; margin-top:4px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a href="#" class="brand">
+      <span class="dot-cluster"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      selenium-test-console
+    </a>
+    <nav class="nav-links">
+      <a href="#suites">Suites</a>
+      <a href="#courses">Live Courses</a>
+      <a href="#reading">Further Reading</a>
+      <a href="https://www.justacademy.co/register-for-course-demo">Book a Demo</a>
+    </nav>
+    <a class="nav-cta" href="https://www.justacademy.co/course-detail/pune/selenium-training-in-pune">Start Learning</a>
+  </div>
+</header>
+
+<div class="wrap hero">
+  <div>
+    <div class="kicker">field-guide / automation-testing</div>
+    <h1>A Selenium framework that <span class="accent">passes</span> more than it breaks.</h1>
+    <p class="lede">A beginner to advanced map of building a real Selenium automation framework: structure, data driven design, BDD with Cucumber, mobile coverage with Appium, and where Cypress and Playwright actually fit in.</p>
+    <div class="hero-ctas">
+      <a class="btn btn-primary" href="https://www.justacademy.co/course-detail/pune/selenium-training-in-pune">Join the Pune live batch</a>
+      <a class="btn btn-ghost" href="#suites">Browse the guide</a>
+    </div>
+  </div>
+
+  <div class="term">
+    <div class="term-bar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="term-title">run — selenium-suite.spec</span>
+    </div>
+    <div class="term-body">
+      <div class="term-line pass" style="animation-delay:.1s"><span class="icon">✓</span><span class="txt">Framework structure <b>Page Object Model</b> — ready</span></div>
+      <div class="term-line pass" style="animation-delay:.3s"><span class="icon">✓</span><span class="txt">Data driven inputs loaded from <b>test-data.xlsx</b></span></div>
+      <div class="term-line pass" style="animation-delay:.5s"><span class="icon">✓</span><span class="txt">BDD scenario parsed — <b>Cucumber + Gherkin</b></span></div>
+      <div class="term-line warn" style="animation-delay:.7s"><span class="icon">!</span><span class="txt">Flaky locator replaced with <b>explicit wait</b></span></div>
+      <div class="term-line pass" style="animation-delay:.9s"><span class="icon">✓</span><span class="txt">Mobile layer connected — <b>Appium, real device</b></span></div>
+      <div class="term-line info" style="animation-delay:1.1s"><span class="icon">·</span><span class="txt">Cross checking against <b>Cypress</b> and <b>Playwright</b> runs</span></div>
+      <div class="term-summary">6 checks reviewed, 5 passed, 1 stabilised<span class="cursor"></span></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="stat-strip">
+    <div class="stat"><b>4000+</b><span>words of framework thinking, not command dumps</span></div>
+    <div class="stat"><b>7</b><span>testing disciplines covered end to end</span></div>
+    <div class="stat"><b>2</b><span>cities, one live Pune batch and Mumbai classrooms</span></div>
+    <div class="stat"><b>0</b><span>fixed sleep statements recommended, ever</span></div>
+  </div>
+</div>
+
+<section id="suites" class="wrap">
+  <div class="section-head">
+    <h2>Everything the guide walks through</h2>
+    <p>Organised the way a real test suite is organised, one focused block at a time, each one building on the last.</p>
+  </div>
+  <div class="suite-list">
+    <div class="suite-item">
+      <div class="suite-check">✓</div>
+      <div><h3>Framework structure from an empty folder</h3><p>Page objects, test logic and configuration kept in separate, disciplined layers.</p></div>
+      <div class="suite-tag">foundations</div>
+    </div>
+    <div class="suite-item">
+      <div class="suite-check">✓</div>
+      <div><h3>Data driven and key driven design</h3><p>Feeding one framework dozens of inputs without writing dozens of test methods.</p></div>
+      <div class="suite-tag">data layer</div>
+    </div>
+    <div class="suite-item">
+      <div class="suite-check">✓</div>
+      <div><h3>BDD with Cucumber and Gherkin</h3><p>Given, when, then scenarios that a non technical teammate can actually read.</p></div>
+      <div class="suite-tag">bdd</div>
+    </div>
+    <div class="suite-item">
+      <div class="suite-check">✓</div>
+      <div><h3>Mobile coverage with Appium</h3><p>Extending the same thinking to native apps and real device testing.</p></div>
+      <div class="suite-tag">mobile</div>
+    </div>
+    <div class="suite-item">
+      <div class="suite-check">✓</div>
+      <div><h3>Selenium next to Cypress and Playwright</h3><p>Where each tool genuinely wins, and why most teams end up running more than one.</p></div>
+      <div class="suite-tag">tooling</div>
+    </div>
+    <div class="suite-item">
+      <div class="suite-check">✓</div>
+      <div><h3>Regression, visual and load testing</h3><p>What happens around your automation once functional checks are already green.</p></div>
+      <div class="suite-tag">coverage</div>
+    </div>
+  </div>
+</section>
+
+<section id="courses" class="wrap">
+  <div class="section-head">
+    <h2>Learn it live, not from a recording</h2>
+    <p>Mentor led sessions streamed to Pune, with the same classroom depth as our Mumbai batches.</p>
+  </div>
+  <div class="card-grid">
+    <a class="course-card" href="https://www.justacademy.co/course-detail/pune/selenium-training-in-pune">
+      <span class="tag">Course</span>
+      <h3>Selenium Training in Pune</h3>
+      <p>Framework design, BDD and real project style assignments with a live mentor reviewing your code.</p>
+      <span class="go">View course →</span>
+    </a>
+    <a class="course-card" href="https://www.justacademy.co/course-detail/pune/python-training-in-pune">
+      <span class="tag">Course</span>
+      <h3>Python Training in Pune</h3>
+      <p>The scripting foundation most automation and API testing work eventually leans on.</p>
+      <span class="go">View course →</span>
+    </a>
+    <a class="course-card" href="https://www.justacademy.co/course-detail/pune/javascript-training-in-pune">
+      <span class="tag">Course</span>
+      <h3>JavaScript Training in Pune</h3>
+      <p>Useful groundwork if Cypress or Playwright are next on your automation roadmap.</p>
+      <span class="go">View course →</span>
+    </a>
+    <a class="course-card bootcamp-card" href="https://www.justacademy.co/job-bootcamp-detail/pune/mern-stack-developer-bootcamp-in-pune-startup-product-development-training">
+      <div>
+        <span class="tag">Bootcamp</span>
+        <h3>MERN Stack Developer Bootcamp, Pune</h3>
+        <p>For testers who eventually want to build the product they have been testing, startup style project work included.</p>
+      </div>
+      <span class="go">View bootcamp →</span>
+    </a>
+  </div>
+</section>
+
+<section id="reading" class="wrap">
+  <div class="section-head">
+    <h2>Further reading</h2>
+    <p>A short log of related pieces worth opening next.</p>
+  </div>
+  <div class="log-list">
+    <div class="log-item">
+      <span class="prompt">$</span>
+      <a href="https://www.justacademy.co/blog-detail/selenium-automation-testing-framework-complete-beginner-guide">open selenium-automation-testing-framework-complete-beginner-guide</a>
+      <span class="path">/blog</span>
+    </div>
+    <div class="log-item">
+      <span class="prompt">$</span>
+      <a href="https://www.justacademy.co/blog-detail/selenium-automation-testing-roadmap-2026-skills-required-for-qa-jobs">open selenium-automation-testing-roadmap-2026-skills-required-for-qa-jobs</a>
+      <span class="path">/blog</span>
+    </div>
+    <div class="log-item">
+      <span class="prompt">$</span>
+      <a href="https://www.justacademy.co/blog-detail/mern-stack-vs-full-stack-java-which-career-path-is-better-in-2026">open mern-stack-vs-full-stack-java-which-career-path-is-better-in-2026</a>
+      <span class="path">/blog</span>
+    </div>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="callout">
+    <div>
+      <h2>Ready to see a live batch in action?</h2>
+      <p>Sit in on a real mentor led Selenium session before you commit a single evening to it.</p>
+    </div>
+    <a class="btn btn-primary" href="https://www.justacademy.co/register-for-course-demo">Register for a free demo</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <a href="#" class="brand"><span class="dot-cluster"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>selenium-test-console</a>
+        <p>A field guide to Selenium automation, written for beginners building their first real framework and streamed live to learners in Pune.</p>
+      </div>
+      <div class="foot-col">
+        <h4>Guide</h4>
+        <a href="#suites">Suites covered</a>
+        <a href="#reading">Further reading</a>
+      </div>
+      <div class="foot-col">
+        <h4>Live Training</h4>
+        <a href="https://www.justacademy.co/course-detail/pune/selenium-training-in-pune">Selenium, Pune</a>
+        <a href="https://www.justacademy.co/course-detail/pune/python-training-in-pune">Python, Pune</a>
+        <a href="https://www.justacademy.co/course-detail/pune/javascript-training-in-pune">JavaScript, Pune</a>
+      </div>
+      <div class="foot-col">
+        <h4>Next Step</h4>
+        <a href="https://www.justacademy.co/job-bootcamp-detail/pune/mern-stack-developer-bootcamp-in-pune-startup-product-development-training">MERN Bootcamp, Pune</a>
+        <a href="https://www.justacademy.co/register-for-course-demo">Book a free demo</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>selenium-test-console · maintained as a learning guide</span>
+      <span>build: stable · checks: passing</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
